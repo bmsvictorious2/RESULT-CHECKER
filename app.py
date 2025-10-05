@@ -1,22 +1,22 @@
 import streamlit as st
 import pandas as pd
 
-# Mock database
+# 🎓 Mock database
 results = {
     "101": {
         "name": "Ali Khan",
         "father_name": "Tariq Khan",
         "registration": "REG-2024-001",
         "subjects": {
-            "English": 75,
-            "Urdu": 68,
-            "Math": 90,
-            "Physics": 88,
-            "Chemistry": 85,
-            "Biology": 78,
-            "Pak Studies": 65,
-            "Islamiat": 70,
-            "Computer": 82,
+            "English": {"9th": 75, "10th": 80},
+            "Urdu": {"9th": 70, "10th": 75},
+            "Math": {"9th": 90, "10th": 92},
+            "Physics": {"9th": 85, "10th": 88},
+            "Chemistry": {"9th": 82, "10th": 84},
+            "Biology": {"9th": 78, "10th": 80},
+            "Pak Studies": {"9th": 68, "10th": 70},
+            "Islamiat": {"9th": 72, "10th": 74},
+            "Computer": {"9th": 80, "10th": 85},
         },
     },
     "102": {
@@ -24,22 +24,59 @@ results = {
         "father_name": "Ahmed Raza",
         "registration": "REG-2024-002",
         "subjects": {
-            "English": 45,
-            "Urdu": 38,
-            "Math": 55,
-            "Physics": 30,
-            "Chemistry": 25,
-            "Biology": 40,
-            "Pak Studies": 50,
-            "Islamiat": 42,
-            "Computer": 35,
+            "English": {"9th": 40, "10th": 35},
+            "Urdu": {"9th": 50, "10th": 45},
+            "Math": {"9th": 30, "10th": 32},
+            "Physics": {"9th": 25, "10th": 28},
+            "Chemistry": {"9th": 33, "10th": 30},
+            "Biology": {"9th": 38, "10th": 35},
+            "Pak Studies": {"9th": 42, "10th": 44},
+            "Islamiat": {"9th": 50, "10th": 48},
+            "Computer": {"9th": 40, "10th": 38},
         },
     },
 }
 
-# App title
-st.title("🎓 Board Result Checker")
-st.subheader("Enter your roll number to view detailed marksheet")
+# 🎨 Custom CSS for attractive table
+st.markdown("""
+    <style>
+        .result-table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+            font-family: 'Segoe UI';
+        }
+        .result-table th {
+            background-color: #0A74DA;
+            color: white;
+            padding: 10px;
+            text-align: center;
+        }
+        .result-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        .result-table tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        .result-table tr:hover {
+            background-color: #d0e4ff;
+        }
+        .pass {
+            color: green;
+            font-weight: bold;
+        }
+        .fail {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+# 🧾 App layout
+st.title("🎓 Student Result Card")
+st.write("Enter your roll number below to view your detailed marksheet:")
 
 roll_no = st.text_input("Enter Roll Number")
 
@@ -54,36 +91,59 @@ if st.button("Check Result"):
         st.markdown(f"**Registration No:** {student['registration']}")
         st.markdown(f"**Roll No:** {roll_no}")
 
-        # Create DataFrame for subjects
+        # 🧮 Process subjects
         subjects = student["subjects"]
-        df = pd.DataFrame({
-            "Subject": list(subjects.keys()),
-            "Marks Obtained": list(subjects.values()),
-            "Total Marks": [100]*len(subjects),
-        })
+        rows = []
+        failed = False
 
-        # Calculate grade per subject
-        def get_grade(marks):
-            if marks >= 80: return "A+"
-            elif marks >= 70: return "A"
-            elif marks >= 60: return "B"
-            elif marks >= 50: return "C"
-            elif marks >= 40: return "D"
-            else: return "F"
+        for subject, marks in subjects.items():
+            total = marks["9th"] + marks["10th"]
+            if marks["9th"] < 40 or marks["10th"] < 40:
+                failed = True
 
-        df["Grade"] = df["Marks Obtained"].apply(get_grade)
-        st.dataframe(df, hide_index=True)
+            # Calculate grade
+            avg = total / 2
+            if avg >= 80:
+                grade = "A+"
+            elif avg >= 70:
+                grade = "A"
+            elif avg >= 60:
+                grade = "B"
+            elif avg >= 50:
+                grade = "C"
+            elif avg >= 40:
+                grade = "D"
+            else:
+                grade = "F"
 
-        # Total marks calculation
-        total = sum(subjects.values())
-        failed = any(m < 40 for m in subjects.values())
+            rows.append(
+                f"<tr><td>{subject}</td><td>{marks['9th']}</td><td>{marks['10th']}</td><td>{total}</td><td>{grade}</td></tr>"
+            )
+
+        # 🎯 Table HTML
+        table_html = f"""
+        <table class="result-table">
+            <tr>
+                <th>Subject</th>
+                <th>9th Marks</th>
+                <th>10th Marks</th>
+                <th>Total Obtained</th>
+                <th>Grade</th>
+            </tr>
+            {''.join(rows)}
+        </table>
+        """
+        st.markdown(table_html, unsafe_allow_html=True)
+
+        # 🔢 Total Marks
+        total_obtained = sum(m["9th"] + m["10th"] for m in subjects.values())
 
         if failed:
-            st.error("❌ Result: Clear Your Supply")
+            st.error(f"❌ Result: Clear Your Supply | Total Marks: {total_obtained} / 1100")
         else:
-            st.success("🎉 Result: Passed")
-
-        st.markdown(f"**Total Marks:** {total} / 1100")
+            st.success(f"🎉 Result: Passed | Total Marks: {total_obtained} / 1100")
 
     else:
         st.error("No record found for this roll number.")
+
+
